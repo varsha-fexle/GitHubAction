@@ -42,4 +42,3 @@ jobs:
           TEST_LEVEL: RunLocalTests
           WAIT: 200
           FLAGS: --checkonly
-          
