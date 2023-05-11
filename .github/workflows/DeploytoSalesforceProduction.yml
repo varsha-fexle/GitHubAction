@@ -1,8 +1,9 @@
+name: Validate changes in Salesforce Production
 on:
   pull_request:
+    types: [opened,reopened]
     branches:
       - master
-name: deploy
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,10 +18,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install -g sfdx-cli
-          #npm install gfarb/sfdx-deploy@v1
+          npm install -g sfdx-cli@latest
           
-      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
+      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
         run: |
             echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
@@ -31,14 +31,9 @@ jobs:
             fi
 
       - name: Authenticate Dev Hub
-        run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d
-        
-      - name: Build, Test & Deploy
-        uses: gfarb/sfdx-deploy@v1
-        env:
-          TARGET_USERNAME: devhub
-          SOURCE_PATH: force-app
-          DESTRUCTIVE_CHANGES: destructive-changes
-          TEST_LEVEL: NoTestRun
-          WAIT: 200
-          FLAGS: --checkonly
+        run: |
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+          
+      - name: Validate changes
+        run: sfdx force:source:deploy --checkonly --sourcepath force-app --target-org devhub --wait 10
+    
