@@ -36,12 +36,5 @@ jobs:
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
           
       - name: Validate changes
-        run: sfdx force:source:deploy --checkonly --sourcepath force-app --targetusername devhub --testlevel RunAllTests --wait 10
-      
-        env:
-          TARGET_USERNAME: devhub
-          SOURCE_PATH: force-app
-          DESTRUCTIVE_CHANGES: destructive-changes
-          TEST_LEVEL: RunLocalTests
-          WAIT: 200
-          FLAGS: --testLevel RunLocalTests
+        run: sfdx force:source:deploy --checkonly --sourcepath force-app --targetusername devhub --testlevel RunLocalTests --wait 10
+    
