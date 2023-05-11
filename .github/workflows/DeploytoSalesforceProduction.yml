@@ -1,4 +1,4 @@
-name: Deploy to Salesforce Production
+name: Validate changes in Salesforce Production
 on:
   pull_request:
     types: [opened,reopened]
@@ -35,7 +35,7 @@ jobs:
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Validate Changes
+      - name: Validate changes
         uses: gfarb/sfdx-deploy@v1
         env:
           TARGET_USERNAME: devhub
@@ -43,4 +43,4 @@ jobs:
           DESTRUCTIVE_CHANGES: destructive-changes
           TEST_LEVEL: RunLocalTests
           WAIT: 200
-          FLAGS: ----testLevel RunLocalTests
+          FLAGS: --testLevel RunLocalTests
