@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - Actions
+      - main
 name: deploy
 jobs:
   deploy:
