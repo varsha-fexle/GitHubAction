@@ -44,5 +44,4 @@ jobs:
           DESTRUCTIVE_CHANGES: destructive-changes
           TEST_LEVEL: RunLocalTests
           WAIT: 200
-          FLAGS: --checkonly
-          BASE_BRANCH: ${{ github.base_ref }}
+          FLAGS: --checkOnly
