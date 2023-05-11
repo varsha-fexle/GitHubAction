@@ -1,12 +1,9 @@
 name: Deploy to Salesforce Production
 on:
-  push:
-    branches:
-      - Actions
   pull_request:
     types: [opened]
     branches:
-      - "actions"
+      - Actions
 jobs:
   deploy:
     runs-on: ubuntu-latest
