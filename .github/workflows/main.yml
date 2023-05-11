@@ -2,11 +2,9 @@ on:
   push:
     branches:
       - Actions
-
-name: Validate Salesforce Metadata
-
+name: deploy
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,14 +15,30 @@ jobs:
         with:
           node-version: "16.x"
 
-      - name: Install Salesforce CLI
-        run: npm install -g sfdx-cli
+      - name: Install Dependencies
+        run: |
+          npm install -g sfdx-cli
+          #npm install gfarb/sfdx-deploy@v1
+          
+      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
+        shell: bash
+        run: |
+            echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
+            secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
+            if [ $secretFileSize == 1 ]; then
+                echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
+                exit 1;
+            fi
 
       - name: Authenticate Dev Hub
-        run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
-          sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d
-
-      - name: Validate Code
-        run: |
-          sfdx force:source:validate -p force-app
+        run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d
+        
+      - name: Build, Test & Deploy
+        uses: gfarb/sfdx-deploy@v1
+        env:
+          TARGET_USERNAME: devhub
+          SOURCE_PATH: force-app
+          DESTRUCTIVE_CHANGES: destructive-changes
+          TEST_LEVEL: RunLocalTests
+          WAIT: 200
+          FLAGS: --checkonly
