@@ -1,7 +1,7 @@
 on:
   pull_request:
     branches:
-      - Actions
+      - master
 name: deploy
 jobs:
   deploy:
