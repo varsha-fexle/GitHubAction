@@ -23,9 +23,9 @@ jobs:
           key: ${{ runner.os }}-sfdx-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-sfdx-
-
-      - name: Install Dependencies
+            
         if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install Dependencies
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
           
