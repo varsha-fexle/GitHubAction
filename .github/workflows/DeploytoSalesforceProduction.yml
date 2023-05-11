@@ -1,8 +1,9 @@
+name: Deploy to Salesforce Production
 on:
-  push:
+  pull_request:
+    types: [opened]
     branches:
       - main
-name: deploy
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,7 +21,7 @@ jobs:
           npm install -g sfdx-cli
           #npm install gfarb/sfdx-deploy@v1
           
-      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
+      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
         run: |
             echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
@@ -31,9 +32,11 @@ jobs:
             fi
 
       - name: Authenticate Dev Hub
-        run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d
-        
+        run: |
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+
       - name: Build, Test & Deploy
+        if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.base_ref == 'main'
         uses: gfarb/sfdx-deploy@v1
         env:
           TARGET_USERNAME: devhub
@@ -41,3 +44,5 @@ jobs:
           DESTRUCTIVE_CHANGES: destructive-changes
           TEST_LEVEL: RunLocalTests
           WAIT: 200
+          FLAGS: --checkonly
+          BASE_BRANCH: ${{ github.base_ref }}
