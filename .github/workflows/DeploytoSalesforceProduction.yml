@@ -36,7 +36,6 @@ jobs:
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
       - name: Build, Test & Deploy
-        if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.base_ref == 'main'
         uses: gfarb/sfdx-deploy@v1
         env:
           TARGET_USERNAME: devhub
