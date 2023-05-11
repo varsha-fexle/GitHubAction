@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - "actions"
+      - Actions
 
 name: Validate Salesforce Metadata
 
