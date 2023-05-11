@@ -25,6 +25,7 @@ jobs:
             ${{ runner.os }}-sfdx-
 
       - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
           
