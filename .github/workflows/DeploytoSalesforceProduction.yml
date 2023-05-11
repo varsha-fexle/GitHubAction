@@ -1,7 +1,7 @@
 name: Validate changes in Salesforce Production
 on:
   pull_request:
-    types: [opened,reopened]
+    types: [opened, reopened]
     branches:
       - master
 jobs:
@@ -16,9 +16,17 @@ jobs:
         with:
           node-version: "16.x"
 
+      - name: Cache SFDX CLI
+        uses: actions/cache@v2
+        with:
+          path: ~/.local/share/sfdxcli
+          key: ${{ runner.os }}-sfdx-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-sfdx-
+
       - name: Install Dependencies
         run: |
-          npm install -g sfdx-cli@latest
+          npm install -g sfdx-cli@7.120.0 || exit 1
           
       - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
@@ -33,7 +41,7 @@ jobs:
       - name: Authenticate Dev Hub
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
-          
+
+
       - name: Validate changes
         run: sfdx force:source:deploy --checkonly --sourcepath force-app --target-org devhub --wait 10
-    
