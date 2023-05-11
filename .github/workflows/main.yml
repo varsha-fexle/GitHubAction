@@ -39,6 +39,6 @@ jobs:
           TARGET_USERNAME: devhub
           SOURCE_PATH: force-app
           DESTRUCTIVE_CHANGES: destructive-changes
-          TEST_LEVEL: RunLocalTests
+          TEST_LEVEL: Default
           WAIT: 200
           FLAGS: --checkonly
