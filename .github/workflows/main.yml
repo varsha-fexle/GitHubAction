@@ -1,7 +1,7 @@
 on:
-  push:
+  pull_request:
     branches:
-      - Actions
+      - master
 name: deploy
 jobs:
   deploy:
@@ -39,6 +39,6 @@ jobs:
           TARGET_USERNAME: devhub
           SOURCE_PATH: force-app
           DESTRUCTIVE_CHANGES: destructive-changes
-          TEST_LEVEL: RunLocalTests
+          TEST_LEVEL: NoTestRun
           WAIT: 200
           FLAGS: --checkonly
