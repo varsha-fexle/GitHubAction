@@ -1,7 +1,7 @@
 name: Validate changes in Salesforce Production
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened]
     branches:
       - master
 jobs:
@@ -24,7 +24,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sfdx-
             
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install Dependencies
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
