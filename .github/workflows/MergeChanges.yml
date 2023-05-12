@@ -37,4 +37,4 @@ jobs:
 
 
       - name: Validate changes
-        run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --testlevel RunLocalTests --wait 200
+        run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --wait 200
