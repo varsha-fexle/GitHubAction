@@ -1,11 +1,12 @@
 name: Validate Changes
 on:
   pull_request:
-    types: [merge]
+    types: [closed]
     branches:
       - master
 jobs:
-  deploy:
+  merge:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
