@@ -1,0 +1,40 @@
+name: MergeChanges
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+jobs:
+  merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+            
+      - name: Install Dependencies
+        run: |
+          npm install -g sfdx-cli@7.120.0 || exit 1
+          
+      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
+        shell: bash
+        run: |
+            echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
+            secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
+            if [ $secretFileSize == 1 ]; then
+                echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
+                exit 1;
+            fi
+
+      - name: Authenticate Dev Hub
+        run: |
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+
+
+      - name: Validate changes
+        run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --testlevel RunLocalTests --wait 200
