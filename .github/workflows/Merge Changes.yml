@@ -1,4 +1,4 @@
-name: Validate Changes
+name: Merge Changes
 on:
   pull_request:
     types: [closed]
