@@ -1,4 +1,4 @@
-name: Validate changes in Salesforce Production
+name: Validate Changes
 on:
   pull_request:
     types: [opened]
