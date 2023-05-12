@@ -15,14 +15,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
-
-      - name: Cache SFDX CLI
-        uses: actions/cache@v2
-        with:
-          path: ~/.local/share/sfdxcli
-          key: ${{ runner.os }}-sfdx-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-sfdx-
             
       - name: Install Dependencies
         run: |
