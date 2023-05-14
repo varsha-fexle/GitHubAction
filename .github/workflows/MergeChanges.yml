@@ -35,6 +35,5 @@ jobs:
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-
-      - name: Validate changes
-        run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --wait 200
+      - name: Deploy changes
+        run: sfdx force:source:deploy --sourcepath force-app -u devhub --wait 200
