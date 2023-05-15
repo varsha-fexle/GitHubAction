@@ -1,12 +1,11 @@
-name: Validate Changes
+name: Validate Latest Commit
 on:
-  pull_request:
-    types: [opened]
+  push:
     branches:
       - master
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,11 +32,11 @@ jobs:
 
       - name: Authenticate Dev Hub
         run: |
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a nitin.rajput@fexle.com.dodev
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
       - name: Get commit SHA
         id: commit
-        run: echo "::set-output name=sha::$(git rev-parse HEAD)"
+        run: echo "::set-output name=sha::$(git log --pretty=format:'%H' -n 1)"
 
       - name: Fetch changed files
         id: changes
@@ -47,4 +46,4 @@ jobs:
 
       - name: Validate changes
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u nitin.rajput@fexle.com.dodev
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u devhub --testlevel RunLocalTests --wait 200
