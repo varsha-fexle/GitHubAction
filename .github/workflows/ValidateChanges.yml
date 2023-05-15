@@ -1,4 +1,4 @@
-name: Validate Changes
+name: Validate Latest Commit Changes
 on:
   push:
     branches:
@@ -8,20 +8,24 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
 
-      - name: Install Dependencies
+      - name: Install Salesforce CLI
         run: npm install -g sfdx-cli@7.120.0 || exit 1
 
       - name: Authenticate Dev Hub
         run: sfdx force:auth:sfdxurl:store -f ${{ secrets.DEVHUB_SFDX_URL }} -d -a devhub
 
-      - name: Validate changes
+      - name: Get Changed Files
+        id: changed_files
+        run: echo "::set-output name=files::$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }})"
+
+      - name: Validate Changes
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath $(git diff-tree --no-commit-id --name-only -r ${{ github.sha }}) -u devhub --testlevel RunLocalTests --wait 200
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changed_files.outputs.files }} -u devhub --testlevel RunLocalTests --wait 200
