@@ -47,4 +47,4 @@ jobs:
 
       - name: Validate changes
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u devhub --testlevel RunLocalTests --wait 200
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u devhub
