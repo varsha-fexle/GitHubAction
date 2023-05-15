@@ -33,7 +33,7 @@ jobs:
 
       - name: Authenticate Dev Hub
         run: |
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a <devhub-username-or-alias>
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
       - name: Get commit SHA
         id: commit
@@ -47,4 +47,4 @@ jobs:
 
       - name: Validate changes
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u <devhub-username-or-alias>
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u devhub
