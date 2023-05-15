@@ -33,7 +33,7 @@ jobs:
 
       - name: Authenticate Dev Hub
         run: |
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a 'nitin.rajput@fexle.com.dodev'
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a nitin.rajput@fexle.com.dodev
 
       - name: Get commit SHA
         id: commit
@@ -47,4 +47,4 @@ jobs:
 
       - name: Validate changes
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u 'nitin.rajput@fexle.com.dodev'
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changes.outputs.files }} -u nitin.rajput@fexle.com.dodev
