@@ -47,7 +47,7 @@ jobs:
       - name: 'Create delta packages for new, modified or deleted metadata'
         run: |
           mkdir changed-sources
-          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources/ --generate-delta --source force-app/
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output .
 
       # Authenticate to org
       - name: 'Authenticate to Production Org'
@@ -55,9 +55,9 @@ jobs:
 
       - name: 'Print changed-sources package.xml'
         run: |
-          cat changed-sources/package.xml
+          cat package/package.xml
 
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
         run:
-          sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunLocalTests --checkonly
+          sfdx force:source:deploy -p "package/package.xml" --testlevel RunLocalTests --checkonly
