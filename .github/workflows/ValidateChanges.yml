@@ -1,100 +1,32 @@
-name: SFDX-CLI Deploy from Repository
+name: Validate Changes
 on:
-  pull_request:
-    types: [opened]
+  push:
     branches:
-      - master
+      - master  # Adjust the branch name if necessary
 
 jobs:
-  SFDX-CLI-Deploy:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Setup Node
+      - name: Set up Salesforce CLI
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
+        env:
+          SFDX_AUTH_URL: ${{ secrets.DEVHUB_SFDX_URL }}  # Add your Salesforce CLI auth URL as a secret in the repository settings
 
-      - name: Install Dependencies
+      - name: Install Salesforce CLI plugins
         run: |
-          npm install sfdx-cli -g
-          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx plugins:install @salesforce/plugin-source
+          sfdx plugins:install @salesforce/plugin-package
 
-      - name: Authenticate Dev Hub
+      - name: Create Package.xml for Changed Components
         run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+          sfdx force:source:delta -p ./src/package.xml -r ./force-app/main/default -m <metadataType>
 
-      - name: Retrieve changes
+      - name: Deploy Changes to Target Org
         run: |
-          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
-          git fetch --all
-          git branch -a
-          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/push-action-deploy.yml"
-          sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
-
-      - name: Generate package.xml
-        run: |
-          git fetch origin master
-          changedFiles=$(git diff --name-only origin/master | grep -v '.github/workflows/push-action-deploy.yml')
-          components=()
-          for file in $changedFiles; do
-            if [[ $file == *".cls" || $file == *".trigger" || $file == *".page" || $file == *".component" || $file == *".aura" || $file == *".lwc" ]]; then
-              components+=($file)
-            elif [[ $file == *"objects/"* ]]; then
-              object=${file#*"objects/"}
-              object=${object%%/*}
-              components+=($object)
-            fi
-          done
-          uniqueComponents=($(echo "${components[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-          echo '<?xml version="1.0" encoding="UTF-8"?><Package xmlns="http://soap.sforce.com/2006/04/metadata">' > package.xml
-          for component in "${uniqueComponents[@]}"; do
-            echo "  <types>" >> package.xml
-            if [[ $component == *".cls" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexClass</name>" >> package.xml
-            elif [[ $component == *".trigger" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexTrigger</name>" >> package.xml
-            elif [[ $component == *".page" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexPage</name>" >> package.xml
-            elif [[ $component == *".component" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexComponent</name>" >> package.xml
-            elif [[ $component == *".aura" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>AuraDefinitionBundle</name>" >> package.xml
-            elif [[ $component == *".lwc" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>LigthningComponentBundle</name>" >> package.xml
-            elif [[ $component == *"objects/"* ]]; then
-              echo "    <members>$component</members>" >> package.xml
-              echo "    <name>CustomObject</name>" >> package.xml
-            fi
-            echo "  </types>" >> package.xml
-          done
-          echo "  <version>53.0</version>" >> package.xml
-          echo "</Package>" >> package.xml
-          cat package.xml
-
-
-
-      - name: Display package.xml
-        run: |
-          cat package/package.xml
-
-      - name: Display destructiveChanges.xml
-        run: |
-          cat destructiveChanges/destructiveChanges.xml
-
-      - name: Convert source to metadata format
-        run: |
-          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
-
-      - name: Deploy code to devhub
-        run: |
-          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
+          sfdx force:mdapi:deploy -d ./src -u devhub -w -1  # Adjust the target org alias as per your setup
