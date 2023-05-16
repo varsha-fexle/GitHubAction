@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
-          npm install -g sfdx-git-delta
+          npm install -g sfdx-git-delta || exit 1
           
       - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
@@ -37,21 +37,16 @@ jobs:
           
       - name: Generate diff metadata
         run: |
-           sfdx sgd:source:delta 
-            --from ${{github.event.pull_request.base.sha}} \
-            --to ${{github.event.pull_request.head.sha}} \
-            --output . \
-            -i .forceignore
+          sfdx sgd:source:delta --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --output . -i .forceignore
 
       - name: Print package.xml
         run: cat package/package.xml
 
-
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest=package/package.xml \
+            --manifest package/package.xml \
             --postdestructivechanges destructiveChanges/destructiveChanges.xml \
-            --testlevel=RunLocalTests \
-            -u devhub
+            --testlevel RunLocalTests \
+            -u devhub \
             --wait 200
