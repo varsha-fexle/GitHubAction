@@ -18,6 +18,7 @@ jobs:
       # Install Dependencies
       - name: 'Installing sfdx git delta'
         run: |
+          npm install sfdx-cli --global
           echo y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
