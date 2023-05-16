@@ -1,6 +1,6 @@
 public with sharing class DemoGitHubActions {
-    public DemoGitHubActions() {
-        System.debug('Hello World');           
-                                     
+    
+    public static void myMethod() {
+        System.debug('4 hello ');
     }
 }
