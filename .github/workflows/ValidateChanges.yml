@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install -g sfdx-cli@7.200.7 || exit 1
+          npm install sfdx-cli --global
           echo y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
