@@ -24,7 +24,7 @@ jobs:
 
       - name: Authenticate with Auth URL
         run: |
-          echo "${{ secrets.AUTH_URL }}" > auth-url.txt
+          echo "${{ secrets.DEV_SFDX_URL }}" > auth-url.txt
           $PWD/sfdx-cli/bin/sfdx force:auth:sfdxurl:store -f auth-url.txt -d -a production
 
       - name: Put changed files into a dir
