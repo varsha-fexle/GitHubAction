@@ -19,7 +19,7 @@ jobs:
       github.event.pull_request.merged == true
     steps:
       # Install Salesforce CLI
-      - name: 'Install Salesforce CLI'
+      - name: Install Salesforce CLI
         run: |
           wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
           mkdir ~/sfdx
@@ -27,44 +27,44 @@ jobs:
           echo "$HOME/sfdx/bin" >> $GITHUB_PATH
           ~/sfdx/bin/sfdx version
 
-      # install SFDX-Git-Delta plugin - https://github.com/scolladon/sfdx-git-delta
-      - name: 'Installing sfdx git delta'
+      # Install SFDX-Git-Delta plugin
+      - name: Install sfdx-git-delta
         run: |
           echo y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
       # Checkout the source code
-      - name: 'Checkout source code'
+      - name: Checkout source code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       # Store secret for production org
-      - name: 'Populate auth file with SFDX_URL secret of the production org'
-        shell: bash
+      - name: Populate auth file with SFDX_URL secret of the production org
         run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} >./DEVHUB_SFDX_URL.txt
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > DEVHUB_SFDX_URL.txt
 
       # Create delta packages for new, modified, or deleted metadata
-      - name: 'Create delta packages for new, modified or deleted metadata'
+      - name: Create delta packages for new, modified or deleted metadata
         run: |
           mkdir changed-sources
           sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources/ --generate-delta --source force-app/
 
       # Authenticate to org
-      - name: 'Authenticate to Production Org'
-        run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
+      - name: Authenticate to Production Org
+        run: sfdx auth:sfdxurl:store -f DEVHUB_SFDX_URL.txt -s -a production
 
       # Deploying to production org(s) - run local tests
-      - name: 'Deploying to production org(s) - run local tests'
+      - name: Deploying to production org(s) - run local tests
         run: |
           sfdx force:apex:test:run -l RunLocalTests -y --json | jq -r '.result.tests[].ClassName' > local-tests.txt
 
       # Deploying to production org(s) - deploy only commit changes
-      - name: 'Deploying to production org(s) - deploy only commit changes'
+      - name: Deploying to production org(s) - deploy only commit changes
         run: |
           LOCAL_TESTS=$(cat local-tests.txt)
           sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests "$LOCAL_TESTS" --json
 
-            - name: 'Deploy destructive changes (if any) to production org(s)'
-              run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
+      # Deploy destructive changes (if any) to production org(s)
+      - name: Deploy destructive changes (if any) to production org(s)
+        run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings
