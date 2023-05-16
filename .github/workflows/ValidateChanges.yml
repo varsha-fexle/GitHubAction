@@ -31,8 +31,9 @@ jobs:
         run: |
           git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
           git fetch --all
-          git --no-pager diff --name-status origin/Staging origin/main ":(exclude).github/workflows/push-action-deploy.yml"
-          sfdx sgd:source:delta --to origin/Staging --from origin/main --repo . --output . -i .forceignore
+          git branch -a
+          git --no-pager diff --name-status origin/master origin/main ":(exclude).github/workflows/push-action-deploy.yml"
+          sfdx sgd:source:delta --to origin/master --from origin/main --repo . --output . -i .forceignore
 
       - name: Generate package.xml
         run: |
