@@ -65,7 +65,8 @@ jobs:
             - name: 'Retrieve local tests'
               id: get-local-tests
               run: |
-               sfdx force:source:retrieve -m ApexClass -n "*Test*" --json | jq -r '.result[].fullName' > local-tests.txt
+                sfdx force:source:retrieve -m ApexClass -n "*Test*" --json > local-tests.json
+                jq -r '.result[].fullName' local-tests.json > local-tests.txt
 
             - name: 'Deploying to production org(s) - run local tests'
               run: |
