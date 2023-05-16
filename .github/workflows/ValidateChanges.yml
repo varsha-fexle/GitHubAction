@@ -53,4 +53,5 @@ jobs:
 
       - name: Deploy code to devhub
         run: |
-          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests -u devhub
+          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
+    
