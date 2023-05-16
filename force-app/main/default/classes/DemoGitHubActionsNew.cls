@@ -1,5 +1,5 @@
 public with sharing class DemoGitHubActionsNew {
-    //Test
+    //Test word
     public static void forTesting() {
         System.debug('Hello World');
     }
