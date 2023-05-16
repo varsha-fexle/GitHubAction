@@ -1,4 +1,4 @@
-name: SFDX-CLI Deploy from Repository
+name: Validate Changes
 on:
   pull_request:
     types: [opened]
@@ -9,33 +9,47 @@ jobs:
   SFDX-CLI-Deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🐧 GitHub Action running on ${{ runner.os }}"
-      - run: echo "🔎 Retrieving ${{ github.ref }} from ${{ github.repository }}."
-      - uses: actions/checkout@v2
-      - run: npm install sfdx-cli -g
-      - run: echo y | sfdx plugins:install sfdx-git-delta
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+
+      - name: Install Dependencies
+        run: |
+          npm install sfdx-cli -g
+          echo y | sfdx plugins:install sfdx-git-delta
 
       - name: Authenticate Dev Hub
         run: |
           echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - run: git config remote.origin.fetch '+refs/heads/:refs/remotes/origin/' 
-      - run: git fetch --all
+      - name: Retrieve changes
+        run: |
+          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          git fetch --all
+          git --no-pager diff --name-status origin/Staging origin/main ":(exclude).github/workflows/push-action-deploy.yml"
+          sfdx sgd:source:delta --to origin/Staging --from origin/main --repo . --output . -i .forceignore
 
-      - run: git --no-pager diff --name-status origin/Staging origin/main ":(exclude).github/workflows/push-action-deploy.yml"
-      - run: sfdx sgd:source:delta --to origin/Staging --from origin/main --repo . --output . -i .forceignore
+      - name: Generate package.xml
+        run: |
+          sfdx force:source:manifest:create --outputdir package --manifestname package.xml --metadata .forceignore
 
-      - name: echo "--- package.xml generated with modified metadata ---"
-        run: cat package/package.xml 
+      - name: Display package.xml
+        run: |
+          cat package/package.xml
 
-      - name: echo "--- destructiveChanges.xml generated with deleted metadata ---"
-        run: cat destructiveChanges/destructiveChanges.xml
+      - name: Display destructiveChanges.xml
+        run: |
+          cat destructiveChanges/destructiveChanges.xml
 
-      - name: echo "--- Converts source-formatted files into metadata that you can deploy using Metadata API. ---"
-        run: sfdx force:source:convert --manifest=package/package.xml --outputdir=convert
+      - name: Convert source to metadata format
+        run: |
+          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
 
-      - name: 'Deploy code LWC Super Batch dev sandbox'
-        run: sfdx force:mdapi:deploy --deploydir=convert --testlevel=RunLocalTests -u devhub
-        
-    run: sfdx force:mdapi:deploy --deploydir=convert --testlevel=RunLocalTests -u devhub
+      - name: Deploy code to devhub
+        run: |
+          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests -u devhub
