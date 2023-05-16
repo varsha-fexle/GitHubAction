@@ -42,12 +42,12 @@ jobs:
 
       - name: Print package.xml
         run: |
-          cat ./force-app/main/default/package.xml
+          cat ./path/to/package.xml
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest ./force-app/main/default/package.xml \
+            --manifest ./path/to/package.xml \
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
