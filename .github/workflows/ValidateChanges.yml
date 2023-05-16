@@ -6,46 +6,34 @@ on:
       - master
 
 jobs:
-  deploy:
+  SFDX-CLI-Deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16.x"
-
-      - name: Install Dependencies
-        run: |
-          npm install sfdx-cli --global
-          echo y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
-
-      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
-        run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
-          secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
-          if [ $secretFileSize == 1 ]; then
-            echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
-            exit 1;
-          fi
+      - run: echo "🐧 GitHub Action running on ${{ runner.os }}"
+      - run: echo "🔎 Retrieving ${{ github.ref }} from ${{ github.repository }}."
+      - uses: actions/checkout@v2
+      - run: npm install sfdx-cli -g
+      - run: echo y | sfdx plugins:install sfdx-git-delta
 
       - name: Authenticate Dev Hub
         run: |
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Retrieve changed source
-        run: |
-          sfdx force:source:pull --forceoverwrite --json -u devhub
+      - run: git config remote.origin.fetch '+refs/heads/:refs/remotes/origin/' 
+      - run: git fetch --all
 
-      - name: Generate package.xml
-        run: |
-          git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > package.xml
-          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types><name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
+      - run: git --no-pager diff --name-status origin/Staging origin/main ":(exclude).github/workflows/push-action-deploy.yml"
+      - run: sfdx sgd:source:delta --to origin/Staging --from origin/main --repo . --output . -i .forceignore
 
-      - name: Validate changes
-        run: |
-          sfdx force:delta:deploy --package package.xml -u devhub --testlevel RunLocalTests --wait 200
+      - name: echo "--- package.xml generated with modified metadata ---"
+        run: cat package/package.xml 
+
+      - name: echo "--- destructiveChanges.xml generated with deleted metadata ---"
+        run: cat destructiveChanges/destructiveChanges.xml
+
+      - name: echo "--- Converts source-formatted files into metadata that you can deploy using Metadata API. ---"
+        run: sfdx force:source:convert --manifest=package/package.xml --outputdir=convert
+
+      - name: 'Deploy code LWC Super Batch dev sandbox'
+        run: sfdx force:mdapi:deploy --deploydir=convert --testlevel=RunLocalTests -u devhub
