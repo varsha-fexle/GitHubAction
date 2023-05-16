@@ -1,6 +1,6 @@
 name: Validate Latest Commit Changes
 on:
-  push:
+  pull_request:
     branches:
       - master
 
