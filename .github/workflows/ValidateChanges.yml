@@ -61,11 +61,15 @@ jobs:
             # Authenticate to org
             - name: 'Authenticate to Production Org'
               run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
+              
+            - name: 'Retrieve local tests'
+              id: get-local-tests
+              run: |
+               sfdx force:source:retrieve -m ApexClass -n "*Test*" --json | jq -r '.result[].fullName' > local-tests.txt
 
-            - name: 'Deploying to production org(s) - run all tests in repo'
-              run:  | 
-                  echo ${{env.APEX_TESTS_ALL}}
-                  sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests ${{env.APEX_TESTS_ALL}} --json
+            - name: 'Deploying to production org(s) - run local tests'
+              run: |
+               sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests "$(cat local-tests.txt)" --json
 
             - name: 'Deploy destructive changes (if any) to production org(s)'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
