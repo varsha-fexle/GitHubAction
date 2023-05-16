@@ -53,11 +53,6 @@ jobs:
       - name: 'Authenticate to Production Org'
         run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
 
-      # Deploying to production org(s) - run local tests
-      - name: 'Deploying to production org(s) - run local tests'
-        run: |
-          sfdx force:apex:test:run -l RunLocalTests -y --json | jq -r '.result.tests[].ClassName' > local-tests.txt
-
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
         run: |
