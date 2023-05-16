@@ -14,7 +14,9 @@ on:
 jobs:
   push-to-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    if: |
+          ${{ github.actor != 'dependabot[bot]' }} &&
+          github.event.pull_request.merged == true
     steps:
       # Install Salesforce CLI
       - name: 'Install Salesforce CLI'
