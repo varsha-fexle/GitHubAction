@@ -15,8 +15,7 @@ function extractApexClasses(){
             return console.log('Unable to scan directory: ' + err);
         } 
         files.forEach(function (file) {
-            if(file.toLowerCase().endsWith('test.cls') || 
-                (file.toLowerCase().startsWith('testrunner') 
+            if(file.indexOf('Test) != -1 
                     && file.toLowerCase().endsWith('.cls')) ){
                 testClsStr += file.replace('.cls','') + ',';
             }
