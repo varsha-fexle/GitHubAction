@@ -1,58 +1,24 @@
-name: SFDX-CLI Deploy from Repository
+name: Deploy to Production
 on:
   pull_request:
-    types: [opened]
-    branches:
-      - master
+    branches: [master]
+    types:
+      - closed
+    paths:
+      - 'force-app/**'
 
 jobs:
-  SFDX-CLI-Deploy:
+  push-to-prod:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16.x"
-
-      - name: Install Dependencies
+      - name: 'Put changed files into a dir'
         run: |
-          npm install sfdx-cli -g
-          echo y | sfdx plugins:install sfdx-git-delta
+          mkdir changed-sources
+          # Use the sfdx-git-delta plugin to identify changed files between the last two commits
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources -i .forceignore
 
-      - name: Authenticate Dev Hub
+      - name: 'Deploying to production'
         run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
-
-      - name: Retrieve changes
-        run: |
-          git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
-          git fetch --all
-          git branch -a
-          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/ValidateChanges.yml"
-          sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
-
-      - name: Generate package.xml
-        run: |
-          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/ValidateChanges.yml' > changedFiles.txt
-          sfdx force:source:tracking:report -f changedFiles.txt --outputdir package --json
-          cat package/sourcePathInfos.json
-
-      - name: Display package.xml
-        run: |
-          cat package/package.xml
-
-      - name: Display destructiveChanges.xml
-        run: |
-          cat destructiveChanges/destructiveChanges.xml
-
-      - name: Convert source to metadata format
-        run: |
-          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
-
-      - name: Deploy code to devhub
-        run: |
-          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
+          # Deploy the changed files to the production org
+          sfdx force:source:deploy -p "changed-sources/force-app" ...
