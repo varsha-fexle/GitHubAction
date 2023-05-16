@@ -29,7 +29,7 @@ jobs:
 
       - name: Retrieve changes
         run: |
-          git config remote.origin.fetch '+refs/heads/:refs/remotes/origin/'
+          git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
           git fetch --all
           git branch -a
           git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/ValidateChanges.yml"
