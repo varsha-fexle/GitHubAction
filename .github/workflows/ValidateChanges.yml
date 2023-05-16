@@ -1,4 +1,4 @@
-name: SFDX-CLI Deploy from Repository
+name: Validate Changes and Run Local Tests
 on:
   pull_request:
     types: [opened]
@@ -6,84 +6,30 @@ on:
       - master
 
 jobs:
-  SFDX-CLI-Deploy:
+  validate-changes:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16.x"
-
-      - name: Install Dependencies
+      - name: Install Salesforce CLI
         run: |
-          npm install sfdx-cli -g
-          echo y | sfdx plugins:install sfdx-git-delta
+          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+          mkdir sfdx-cli
+          tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
+          echo 'export PATH=$PATH:$PWD/sfdx-cli/bin' >> $GITHUB_ENV
 
       - name: Authenticate Dev Hub
         run: |
           echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Retrieve changes
+      - name: Put changed files into a dir
         run: |
-          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
-          git fetch --all
-          git branch -a
-          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/push-action-deploy.yml"
-          sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
+          mkdir changed-sources
+          sfdx sgd:source:delta --to origin/master --from origin/master^ --output changed-sources -i .forceignore
 
-      - name: Generate package.xml
+      - name: Validate changes
         run: |
-          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
-          echo '<?xml version="1.0" encoding="UTF-8"?><Package xmlns="http://soap.sforce.com/2006/04/metadata">' > package.xml
-          while IFS= read -r file; do
-            echo "  <types>" >> package.xml
-            if [[ $file == *".cls" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexClass</name>" >> package.xml
-            elif [[ $file == *".trigger" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexTrigger</name>" >> package.xml
-            elif [[ $file == *".page" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexPage</name>" >> package.xml
-            elif [[ $file == *".component" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>ApexComponent</name>" >> package.xml
-            elif [[ $file == *".aura" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>AuraDefinitionBundle</name>" >> package.xml
-            elif [[ $file == *".lwc" ]]; then
-              echo "    <members>*</members>" >> package.xml
-              echo "    <name>LigthningComponentBundle</name>" >> package.xml
-            elif [[ $file == *"objects/"* ]]; then
-              object=${file#*"objects/"}
-              object=${object%%/*}
-              echo "    <members>$object</members>" >> package.xml
-              echo "    <name>CustomObject</name>" >> package.xml
-            fi
-            echo "  </types>" >> package.xml
-          done < changedFiles.txt
-          echo "  <version>53.0</version>" >> package.xml
-          echo "</Package>" >> package.xml
-          cat package.xml
-
-
-      - name: Display package.xml
-        run: |
-          cat package/package.xml
-
-      - name: Display destructiveChanges.xml
-        run: |
-          cat destructiveChanges/destructiveChanges.xml
-
-      - name: Convert source to metadata format
-        run: |
-          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
-
-      - name: Deploy code to devhub
-        run: |
-          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
+          sfdx force:source:deploy -p "changed-sources/force-app" --checkonly --testlevel RunLocalTests -u devhub
