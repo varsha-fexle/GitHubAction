@@ -16,7 +16,7 @@ function extractApexClasses(){
         } 
         files.forEach(function (file) {
             if(file.indexOf('Test') != -1 
-                    && file.toLowerCase().endsWith('.cls')) ){
+                    && file.toLowerCase().endsWith('.cls') ){
                 testClsStr += file.replace('.cls','') + ',';
             }
         });
