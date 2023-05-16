@@ -37,9 +37,9 @@ jobs:
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Generate diff metadata
+      - name: Retrieve changed source
         run: |
-          sfdx force:source:delta --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --output . -i .forceignore
+          sfdx force:source:pull --forceoverwrite --json
 
       - name: Print package.xml
         run: |
