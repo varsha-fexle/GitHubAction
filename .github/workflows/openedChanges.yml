@@ -53,6 +53,11 @@ jobs:
       - name: 'Authenticate to Production Org'
         run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
 
+      # Print changed files
+      - name: 'Print changed files'
+        run: |
+          ls changed-sources
+
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
         run:
