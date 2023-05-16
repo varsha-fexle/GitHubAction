@@ -43,7 +43,7 @@ jobs:
 
       - name: Print package.xml
         run: |
-           cat ./force-app/main/default/package.xml
+          cat ./force-app/main/default/package.xml
 
       - name: Validate changes
         run: |
