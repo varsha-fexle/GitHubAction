@@ -55,9 +55,8 @@ jobs:
 
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
-        run: |
-          LOCAL_TESTS=$(cat local-tests.txt)
-          sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests "$LOCAL_TESTS" --json
+        run:
+          sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunLocalTests --checkonly
 
       # Deploy destructive changes (if any) to production org(s)
       - name: 'Deploy destructive changes (if any) to production org(s)'
