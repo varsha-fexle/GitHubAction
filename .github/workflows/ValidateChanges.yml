@@ -22,6 +22,11 @@ jobs:
           tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
           echo "export PATH=$PATH:$PWD/sfdx-cli/bin" >> $GITHUB_ENV
 
+      - name: Authenticate with Auth URL
+        run: |
+          echo "${{ secrets.AUTH_URL }}" > auth-url.txt
+          $PWD/sfdx-cli/bin/sfdx force:auth:sfdxurl:store -f auth-url.txt -d -a production
+
       - name: Put changed files into a dir
         run: |
           mkdir changed-sources
@@ -29,4 +34,4 @@ jobs:
 
       - name: Deploying to production
         run: |
-          $PWD/sfdx-cli/bin/sfdx force:source:deploy -p "changed-sources/force-app" -u devhub -l RunLocalTests
+          $PWD/sfdx-cli/bin/sfdx force:source:deploy -p "changed-sources/force-app" -u production -l RunLocalTests
