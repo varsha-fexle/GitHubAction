@@ -1,38 +1,58 @@
-name: Validate Changes
+name: SFDX-CLI Deploy from Repository
 on:
-  push:
+  pull_request:
+    types: [opened]
     branches:
-      - master  # Adjust the branch name if necessary
+      - master
 
 jobs:
-  validate:
+  SFDX-CLI-Deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Salesforce CLI
+      - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
-        env:
-          DEVHUB_SFDX_URL: ${{ secrets.DEVHUB_SFDX_URL }}  # Add your Salesforce CLI auth URL as a secret in the repository settings
+          node-version: "16.x"
 
-      - name: Install Salesforce CLI
-        run: npm install -g sfdx-cli@latest
-
-      - name: Install Salesforce CLI plugins
+      - name: Install Dependencies
         run: |
-          npx sfdx plugins:install @salesforce/plugin-source
-          npx sfdx plugins:install @salesforce/plugin-package
+          npm install sfdx-cli -g
+          echo y | sfdx plugins:install sfdx-git-delta
 
-      - name: Authenticate with Salesforce CLI
-        run: npx sfdx force:auth:sfdxurl:store -f $DEVHUB_SFDX_URL -a targetOrg
-
-      - name: Create Package.xml for Changed Components
+      - name: Authenticate Dev Hub
         run: |
-          npx sfdx force:source:delta -p ./src/package.xml -r ./force-app/main/default -m <metadataType>
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Deploy Changes to Target Org
+      - name: Retrieve changes
         run: |
-          npx sfdx force:mdapi:deploy -d ./src -u targetOrg -w -1
+          git config remote.origin.fetch '+refs/heads/:refs/remotes/origin/'
+          git fetch --all
+          git branch -a
+          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/push-action-deploy.yml"
+          sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
+
+      - name: Generate package.xml
+        run: |
+          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
+          sfdx force:source:tracking:report -f changedFiles.txt --outputdir package --json
+          cat package/sourcePathInfos.json
+
+      - name: Display package.xml
+        run: |
+          cat package/package.xml
+
+      - name: Display destructiveChanges.xml
+        run: |
+          cat destructiveChanges/destructiveChanges.xml
+
+      - name: Convert source to metadata format
+        run: |
+          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
+
+      - name: Deploy code to devhub
+        run: |
+          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
