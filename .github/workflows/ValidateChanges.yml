@@ -69,7 +69,8 @@ jobs:
 
             - name: 'Deploying to production org(s) - run local tests'
               run: |
-               sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests "$(cat local-tests.txt)" --json
+                 LOCAL_TESTS=$(cat local-tests.txt)
+                 sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunSpecifiedTests --runtests "$LOCAL_TESTS" --json
 
             - name: 'Deploy destructive changes (if any) to production org(s)'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
