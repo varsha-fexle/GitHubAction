@@ -1,9 +1,8 @@
 name: Validate Changes
 on:
-  pull_request:
-    types: [opened]
+  push:
     branches:
-      - master
+      - master  # Adjust the branch name if necessary
 
 jobs:
   validate:
@@ -15,19 +14,25 @@ jobs:
       - name: Set up Salesforce CLI
         uses: actions/setup-node@v2
         with:
-          node-version: "16.x"
+          node-version: '14'
         env:
-          SFDX_AUTH_URL: ${{ secrets.DEVHUB_SFDX_URL }}  # Add your Salesforce CLI auth URL as a secret in the repository settings
+          DEVHUB_SFDX_URL: ${{ secrets.DEVHUB_SFDX_URL }}  # Add your Salesforce CLI auth URL as a secret in the repository settings
+
+      - name: Install Salesforce CLI
+        run: npm install -g sfdx-cli@latest
 
       - name: Install Salesforce CLI plugins
         run: |
-          sfdx plugins:install @salesforce/plugin-source
-          sfdx plugins:install @salesforce/plugin-package
+          npx sfdx plugins:install @salesforce/plugin-source
+          npx sfdx plugins:install @salesforce/plugin-package
+
+      - name: Authenticate with Salesforce CLI
+        run: npx sfdx force:auth:sfdxurl:store -f $DEVHUB_SFDX_URL -a targetOrg
 
       - name: Create Package.xml for Changed Components
         run: |
-          sfdx force:source:delta -p ./src/package.xml -r ./force-app/main/default -m <metadataType>
+          npx sfdx force:source:delta -p ./src/package.xml -r ./force-app/main/default -m <metadataType>
 
       - name: Deploy Changes to Target Org
         run: |
-          sfdx force:mdapi:deploy -d ./src -u devhub -w -1  # Adjust the target org alias as per your setup
+          npx sfdx force:mdapi:deploy -d ./src -u targetOrg -w -1
