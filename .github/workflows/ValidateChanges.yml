@@ -29,4 +29,4 @@ jobs:
 
       - name: Deploying to production
         run: |
-          $PWD/sfdx-cli/bin/sfdx force:source:deploy -p "changed-sources/force-app" -u MyTargetOrgAlias -l RunLocalTests
+          $PWD/sfdx-cli/bin/sfdx force:source:deploy -p "changed-sources/force-app" -u devhub -l RunLocalTests
