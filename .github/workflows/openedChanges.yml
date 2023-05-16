@@ -56,7 +56,7 @@ jobs:
       # Print changed files
       - name: 'Print changed files'
         run: |
-          ls changed-sources
+          find changed-sources -type f
 
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
