@@ -49,7 +49,7 @@ jobs:
           fi
           echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" > package.xml
           cat temp_package.xml >> package.xml
-          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
+          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> GitHubAction/manifest/package.xml
           rm temp_package.xml
 
       - name: Validate changes
