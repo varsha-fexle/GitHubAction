@@ -1,4 +1,4 @@
-name: Validate Changes
+name: SFDX-CLI Deploy from Repository
 on:
   pull_request:
     types: [opened]
@@ -37,3 +37,5 @@ jobs:
 
       - name: 'Deploy code LWC Super Batch dev sandbox'
         run: sfdx force:mdapi:deploy --deploydir=convert --testlevel=RunLocalTests -u devhub
+        
+    run: sfdx force:mdapi:deploy --deploydir=convert --testlevel=RunLocalTests -u devhub
