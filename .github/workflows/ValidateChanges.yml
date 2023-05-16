@@ -53,6 +53,10 @@ jobs:
           echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> GitHubAction/manifest/package.xml
           rm temp_package.xml
 
+      - name: Create manifest directory
+        run: |
+          mkdir -p GitHubAction/manifest
+
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
