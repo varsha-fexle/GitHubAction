@@ -51,7 +51,7 @@ jobs:
             - name: 'Populate auth file with SFDX_URL secret of the production org'
               shell: bash
               run: |
-                  echo ${{ secrets.SFDX_PRODUCTION_URL}} > ./SFDX_PRODUCTION_URL.txt
+                  echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
 
             - name: 'Create delta packages for new, modified or deleted metadata'
               run: | 
