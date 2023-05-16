@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate package.xml
         run: |
-          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
+          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/ValidateChanges.yml' > changedFiles.txt
           sfdx force:source:tracking:report -f changedFiles.txt --outputdir package --json
           cat package/sourcePathInfos.json
 
