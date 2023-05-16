@@ -1,5 +1,5 @@
 # Unique name for this workflow
-name: Deploy to Production
+name: Validate to Production
 
 # Definition when the workflow should run
 on:
