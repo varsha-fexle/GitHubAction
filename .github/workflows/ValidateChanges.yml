@@ -17,10 +17,10 @@ jobs:
 
       - name: Install Salesforce CLI
         run: |
-          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+          curl -sL https://developer.salesforce.com/media/salesforce-cli/sfdx-cli/channels/stable/sfdx-cli-linux-x64.tar.xz -o sfdx-cli.tar.xz
           mkdir sfdx-cli
-          tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
-          echo "export PATH=$PATH:$PWD/sfdx-cli/bin" >> $GITHUB_ENV
+          tar xJf sfdx-cli.tar.xz -C sfdx-cli --strip-components 1
+          ./sfdx-cli/install
 
       - name: Authenticate with Auth URL
         run: |
