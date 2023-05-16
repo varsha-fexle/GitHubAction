@@ -1,17 +1,18 @@
-name: Deploy to Production
+name: Validate Changes and Run Local Tests
 on:
   pull_request:
-    branches: [master]
-    types:
-      - closed
-    paths:
-      - 'force-app/**'
+    types: [opened]
+    branches:
+      - master
 
 jobs:
-  push-to-prod:
+  validate-changes:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Install Salesforce CLI
         run: |
           wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
@@ -19,11 +20,16 @@ jobs:
           tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
           echo 'export PATH=$PATH:$PWD/sfdx-cli/bin' >> $GITHUB_ENV
 
-      - name: 'Put changed files into a dir'
+      - name: Authenticate Dev Hub
+        run: |
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+
+      - name: Put changed files into a dir
         run: |
           mkdir changed-sources
-          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources -i .forceignore
+          sfdx sgd:source:delta --to origin/master --from origin/master^ --output changed-sources -i .forceignore
 
-      - name: 'Deploying to production'
+      - name: Validate changes
         run: |
-          sfdx force:source:deploy -p "changed-sources/force-app" ...
+          sfdx force:source:deploy -p "changed-sources/force-app" --checkonly --testlevel RunLocalTests -u devhub
