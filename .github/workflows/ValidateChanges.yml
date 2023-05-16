@@ -37,17 +37,16 @@ jobs:
           
       - name: Generate diff metadata
         run: |
-           sfdx sgd:source:delta --from ${{github.event.pull_request.base.sha}} --to ${{github.event.pull_request.head.sha}} --output . -i .forceignore
+          sfdx sgd:source:delta --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --output . -i .forceignore
 
       - name: Print package.xml
         run: cat package/package.xml
 
-
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest=package/package.xml \
+            --manifest package/package.xml \
             --postdestructivechanges destructiveChanges/destructiveChanges.xml \
-            --testlevel=RunLocalTests \
-            -u devhub
+            --testlevel RunLocalTests \
+            -u devhub \
             --wait 200
