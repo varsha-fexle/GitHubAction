@@ -32,7 +32,7 @@ jobs:
           git config remote.origin.fetch '+refs/heads/:refs/remotes/origin/'
           git fetch --all
           git branch -a
-          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/push-action-deploy.yml"
+          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/ValidateChanges.yml"
           sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
 
       - name: Generate package.xml
