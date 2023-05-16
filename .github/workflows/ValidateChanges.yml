@@ -19,6 +19,8 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
+          npm install -g sfdx-diff || exit 1
+
           
       - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
@@ -33,7 +35,12 @@ jobs:
       - name: Authenticate Dev Hub
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
-
+          
+      - name: Get Changed Files
+        id: changed_files
+        run: |
+          changed_files=$(sfdx force:source:diff --name-only --sourcepath force-app -u devhub)
+          echo "::set-output name=files::$changed_files"
 
       - name: Validate changes
         run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --testlevel RunLocalTests --wait 200
