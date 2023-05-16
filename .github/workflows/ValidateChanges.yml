@@ -19,48 +19,23 @@ jobs:
           node-version: "16.x"
 
       - name: Install Dependencies
-        run: |
-          npm install sfdx-cli --global
-          echo y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
-
-      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
-        run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
-          secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
-          if [ $secretFileSize == 1 ]; then
-            echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
-            exit 1;
-          fi
+        run: npm install sfdx-cli --global
 
       - name: Authenticate Dev Hub
-        run: |
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+        run: sfdx force:auth:sfdxurl:store -f ${{ secrets.DEVHUB_SFDX_URL }} -d -a devhub
 
       - name: Retrieve changed source
-        run: |
-          sfdx force:source:pull --forceoverwrite --json -u devhub
+        run: sfdx force:source:pull --forceoverwrite --json -u devhub
 
       - name: Generate package.xml
         run: |
-          if git rev-parse --quiet --verify HEAD^; then
-            git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > temp_package.xml
-          else
-            find force-app/ -type d | sed 's/^force-app\//<members>/; s/$/<\/members>/' > temp_package.xml
-          fi
-          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" > GitHubAction/manifest/package.xml
-          cat temp_package.xml >> GitHubAction/manifest/package.xml
-          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> GitHubAction/manifest/package.xml
-          rm temp_package.xml
-
-      - name: Create manifest directory
-        run: |
-          mkdir -p GitHubAction/manifest
+          git diff-tree --no-commit-id --name-only -r HEAD | grep '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > package.xml
+          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types><members>*</members><name>ApexClass</name></types><version>53.0</version></Package>" >> package.xml
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest GitHubAction/manifest/package.xml \
+            --manifest package.xml \
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
