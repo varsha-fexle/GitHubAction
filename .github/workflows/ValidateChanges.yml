@@ -1,4 +1,4 @@
-name: Validate Changes
+name: SFDX-CLI Deploy from Repository
 on:
   pull_request:
     types: [opened]
@@ -6,9 +6,8 @@ on:
       - master
 
 jobs:
-  deploy:
+  SFDX-CLI-Deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,39 +19,71 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install sfdx-cli --global
+          npm install sfdx-cli -g
           echo y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
-
-      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
-        run: |
-          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
-          secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
-          if [ $secretFileSize == 1 ]; then
-            echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
-            exit 1;
-          fi
 
       - name: Authenticate Dev Hub
         run: |
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
 
-      - name: Retrieve changed source
+      - name: Retrieve changes
         run: |
-          sfdx force:source:pull --forceoverwrite --json -u devhub
+          git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          git fetch --all
+          git branch -a
+          git --no-pager diff --name-status origin/master origin/master ":(exclude).github/workflows/push-action-deploy.yml"
+          sfdx sgd:source:delta --to origin/master --from origin/master --repo . --output . -i .forceignore
 
       - name: Generate package.xml
         run: |
-          git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > package.xml
-          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" >> package.xml
-          cat package.xml >> package.xml
-          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
+          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
+          echo '<?xml version="1.0" encoding="UTF-8"?><Package xmlns="http://soap.sforce.com/2006/04/metadata">' > package.xml
+          while IFS= read -r file; do
+            echo "  <types>" >> package.xml
+            if [[ $file == *".cls" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexClass</name>" >> package.xml
+            elif [[ $file == *".trigger" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexTrigger</name>" >> package.xml
+            elif [[ $file == *".page" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexPage</name>" >> package.xml
+            elif [[ $file == *".component" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexComponent</name>" >> package.xml
+            elif [[ $file == *".aura" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>AuraDefinitionBundle</name>" >> package.xml
+            elif [[ $file == *".lwc" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>LigthningComponentBundle</name>" >> package.xml
+            elif [[ $file == *"objects/"* ]]; then
+              object=${file#*"objects/"}
+              object=${object%%/*}
+              echo "    <members>$object</members>" >> package.xml
+              echo "    <name>CustomObject</name>" >> package.xml
+            fi
+            echo "  </types>" >> package.xml
+          done < changedFiles.txt
+          echo "  <version>53.0</version>" >> package.xml
+          echo "</Package>" >> package.xml
+          cat package.xml
 
-      - name: Validate changes
+
+      - name: Display package.xml
         run: |
-          sfdx force:source:deploy --checkonly \
-            --manifest package.xml \
-            --testlevel RunLocalTests \
-            -u devhub \
-            --wait 200
+          cat package/package.xml
 
+      - name: Display destructiveChanges.xml
+        run: |
+          cat destructiveChanges/destructiveChanges.xml
+
+      - name: Convert source to metadata format
+        run: |
+          sfdx force:source:convert --outputdir convert --packagename package --manifest package/package.xml
+
+      - name: Deploy code to devhub
+        run: |
+          sfdx force:mdapi:deploy --deploydir convert --testlevel RunLocalTests --checkonly -u devhub
