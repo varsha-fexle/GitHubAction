@@ -1,39 +1,34 @@
-name: Validate Changes
+name: Validate Latest Commit Changes
 on:
-  pull_request:
-    types: [opened]
+  push:
     branches:
       - master
+
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
-            
-      - name: Install Dependencies
-        run: |
-          npm install -g sfdx-cli@7.120.0 || exit 1
-          
-      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
-        shell: bash
-        run: |
-            echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
-            secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
-            if [ $secretFileSize == 1 ]; then
-                echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
-                exit 1;
-            fi
+
+      - name: Install Salesforce CLI
+        run: npm install -g sfdx-cli@7.120.0 || exit 1
 
       - name: Authenticate Dev Hub
+        run: sfdx force:auth:sfdxurl:store -f ${{ secrets.DEVHUB_SFDX_URL }} -d -a devhub
+
+      - name: Get Changed Files
+        id: changed_files
         run: |
-          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+          commit_sha=$(git rev-parse HEAD)
+          changed_files=$(git diff-tree --no-commit-id --name-only -r $commit_sha)
+          echo "::set-output name=files::$changed_files"
 
-
-      - name: Validate changes
-        run: sfdx force:source:deploy --checkonly --sourcepath force-app -u devhub --testlevel RunLocalTests --wait 200
+      - name: Validate Changes
+        run: |
+          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changed_files.outputs.files }} -u devhub --testlevel RunLocalTests --wait 200
