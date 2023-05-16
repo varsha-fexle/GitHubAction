@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install -g sfdx-cli@7.120.0 || exit 1
-          npm install -g sfdx-git-delta
+          npm install -g sfdx-git-delta || exit 1
           
       - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
         shell: bash
