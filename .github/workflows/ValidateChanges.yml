@@ -43,13 +43,14 @@ jobs:
       - name: Generate package.xml
         run: |
           if git rev-parse --quiet --verify HEAD^; then
-            git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > package.xml
+            git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > temp_package.xml
           else
-            find force-app/ -type d | sed 's/^force-app\//<members>/; s/$/<\/members>/' > package.xml
+            find force-app/ -type d | sed 's/^force-app\//<members>/; s/$/<\/members>/' > temp_package.xml
           fi
-          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" >> package.xml
-          cat package.xml >> package.xml
-          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
+          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" > package.xml
+          cat temp_package.xml >> package.xml
+          echo "<name>CustomObject</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
+          rm temp_package.xml
 
       - name: Validate changes
         run: |
@@ -58,4 +59,5 @@ jobs:
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
+
 
