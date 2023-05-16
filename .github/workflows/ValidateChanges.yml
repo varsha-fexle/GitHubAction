@@ -60,7 +60,7 @@ jobs:
 
             # Authenticate to org
             - name: 'Authenticate to Production Org'
-              run: sfdx auth:sfdxurl:store -f ./SFDX_PRODUCTION_URL.txt -s -a production
+              run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
 
             - name: 'Deploying to production org(s) - run all tests in repo'
               run:  | 
