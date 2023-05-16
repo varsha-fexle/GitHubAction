@@ -14,7 +14,6 @@ on:
 jobs:
   push-to-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       # Install Salesforce CLI
       - name: 'Install Salesforce CLI'
@@ -46,7 +45,6 @@ jobs:
       # Create delta packages for new, modified, or deleted metadata
       - name: 'Create delta packages for new, modified or deleted metadata'
         run: |
-          mkdir changed-sources
           sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output .
 
       # Authenticate to org
@@ -57,8 +55,8 @@ jobs:
         run: |
           cat package/package.xml
 
-      # Deploying to production org(s) - deploy only commit changes
-      - name: 'Deploying to production org(s) - deploy only commit changes'
+      # Validating Changes
+      - name: 'Validating Changes'
         run: |
           sfdx force:source:deploy --checkonly \
           --manifest=package/package.xml \
