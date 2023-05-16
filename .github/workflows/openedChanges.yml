@@ -56,7 +56,7 @@ jobs:
           cat package/package.xml
 
       # Validating Changes
-      - name: 'Validating Changes'
+      - name: 'Validating only commit changes'
         run: |
           sfdx force:source:deploy --checkonly \
           --manifest=package/package.xml \
