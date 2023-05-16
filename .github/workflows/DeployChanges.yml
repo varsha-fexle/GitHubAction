@@ -6,12 +6,13 @@ on:
   pull_request:
     branches: [master]
     types:
-      - closed
+      - opened
+    paths:
+      - 'force-app/**'
 
 # Jobs to be executed
 jobs:
   push-to-prod:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       # Install Salesforce CLI
@@ -44,13 +45,17 @@ jobs:
       # Create delta packages for new, modified, or deleted metadata
       - name: 'Create delta packages for new, modified or deleted metadata'
         run: |
-          mkdir changed-sources
-          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources/ --generate-delta --source force-app/
+          sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output .
 
       # Authenticate to org
       - name: 'Authenticate to Production Org'
         run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
 
-      # Deploying to production org(s)
-      - name: 'Deploying to production org(s)'
-        run: sfdx force:source:deploy -p "changed-sources/force-app" --json
+      - name: 'Print changed-sources package.xml'
+        run: |
+          cat package/package.xml
+
+      # Deploying to production org(s) - deploy only commit changes
+      - name: 'Deploying to production org(s) - deploy only commit changes'
+        run: |
+          sfdx force:source:deploy --manifest=package/package.xml --testlevel NoTestRun
