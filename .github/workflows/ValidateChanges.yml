@@ -4,9 +4,11 @@ on:
     types: [opened]
     branches:
       - master
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -15,43 +17,38 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
-            
+
       - name: Install Dependencies
         run: |
-          npm install -g sfdx-cli@7.120.0 || exit 1
-          npm install -g sfdx-git-delta
-          
-      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
-        shell: bash
+          npm install sfdx-cli --global
+          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx plugins
+
+      - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
         run: |
-            echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
-            secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
-            if [ $secretFileSize == 1 ]; then
-                echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
-                exit 1;
-            fi
+          echo ${{ secrets.DEVHUB_SFDX_URL }} > ./DEVHUB_SFDX_URL.txt
+          secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
+          if [ $secretFileSize == 1 ]; then
+            echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
+            exit 1;
+          fi
 
       - name: Authenticate Dev Hub
         run: |
           sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
-          
-      - name: Generate diff metadata
+
+      - name: Retrieve changed source
         run: |
-           sfdx sgd:source:delta 
-            --from ${{github.event.pull_request.base.sha}} \
-            --to ${{github.event.pull_request.head.sha}} \
-            --output . \
-            -i .forceignore
+          sfdx force:source:pull --forceoverwrite --json -u devhub
 
       - name: Print package.xml
-        run: cat package/package.xml
-
+        run: |
+           cat ./force-app/main/default/package.xml
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest=package/package.xml \
-            --postdestructivechanges destructiveChanges/destructiveChanges.xml \
-            --testlevel=RunLocalTests \
-            -u devhub
+            --manifest ./path/to/package.xml \
+            --testlevel RunLocalTests \
+            -u devhub \
             --wait 200
