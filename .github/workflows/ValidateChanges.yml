@@ -41,14 +41,17 @@ jobs:
         run: |
           sfdx force:source:pull --forceoverwrite --json -u devhub
 
-      - name: Print package.xml
+      - name: Find package.xml
+        id: find_package
         run: |
-         cat ./GitHubAction/manifest/package.xml
+          package_xml=$(find ./ -type f -name "package.xml" | head -n 1)
+          echo "::set-output name=package_xml::$package_xml"
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest ./path/to/package.xml \
+            --manifest=${{ steps.find_package.outputs.package_xml }} \
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
+
