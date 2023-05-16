@@ -58,7 +58,3 @@ jobs:
       # Deploying to production org(s)
       - name: 'Deploying to production org(s)'
         run: sfdx force:source:deploy -p "changed-sources/force-app" --json
-
-      # Deploy destructive changes (if any) to production org(s)
-      - name: 'Deploy destructive changes (if any) to production org(s)'
-        run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings
