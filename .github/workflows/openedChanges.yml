@@ -52,6 +52,17 @@ jobs:
       # Authenticate to org
       - name: 'Authenticate to Production Org'
         run: sfdx auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -s -a production
+        
+      - name: 'Generate package.xml'
+        run: |
+            echo '<?xml version="1.0" encoding="UTF-8"?>' > package.xml
+            echo '<Package xmlns="http://soap.sforce.com/2006/04/metadata">' >> package.xml
+            echo '  <types>' >> package.xml
+            echo '    <members>*</members>' >> package.xml
+            echo '    <name>*</name>' >> package.xml
+            echo '  </types>' >> package.xml
+            echo '  <version>53.0</version>' >> package.xml
+            echo '</Package>' >> package.xml
 
       # Print changed files
       - name: 'Print changed files'
