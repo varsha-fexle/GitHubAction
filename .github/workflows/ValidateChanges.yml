@@ -39,7 +39,7 @@ jobs:
 
       - name: Retrieve changed source
         run: |
-          sfdx force:source:pull --forceoverwrite --json
+          sfdx force:source:pull --forceoverwrite --json -u devhub
 
       - name: Print package.xml
         run: |
