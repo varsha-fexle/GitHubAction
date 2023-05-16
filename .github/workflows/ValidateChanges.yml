@@ -27,7 +27,7 @@ jobs:
           
       - name: Retrieve changes
         run: |
-         /path/to/sfdx-cli/bin/sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources -i .forceignore
+         /absolute/path/to/sfdx-cli/bin/sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources -i .forceignore
       - name: Deploying to production
         run: |
           cd changed-sources/force-app
