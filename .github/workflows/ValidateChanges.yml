@@ -37,7 +37,9 @@ jobs:
 
       - name: Generate package.xml
         run: |
-          sfdx force:project:manifest:create --outputdir package --name package.xml
+          git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
+          sfdx force:source:tracking:report -f changedFiles.txt --outputdir package --json
+          cat package/sourcePathInfos.json
 
       - name: Display package.xml
         run: |
