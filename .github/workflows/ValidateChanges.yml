@@ -1,34 +1,57 @@
-name: Validate Latest Commit Changes
+name: Validate Changes
 on:
   pull_request:
     types: [opened]
     branches:
       - master
-
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v2
         with:
           node-version: "16.x"
-
-      - name: Install Salesforce CLI
-        run: npm install -g sfdx-cli@7.120.0 || exit 1
+            
+      - name: Install Dependencies
+        run: |
+          npm install -g sfdx-cli@7.120.0 || exit 1
+          echo y | ./node_modules/.bin/sfdx plugins:install sfdx-git-delta
+          
+      - name: 'Populate auth file with DEVHUB_SFDX_URL and DEVHUB_SFDX_AUTH_URL secrets'
+        shell: bash
+        run: |
+            echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
+            secretFileSize=$(wc -c "./DEVHUB_SFDX_URL.txt" | awk '{print $1}')
+            if [ $secretFileSize == 1 ]; then
+                echo "Missing DEVHUB_SFDX_URL secret. Is this workflow running on a fork?";
+                exit 1;
+            fi
 
       - name: Authenticate Dev Hub
-        run: sfdx force:auth:sfdxurl:store -f ${{ secrets.DEVHUB_SFDX_URL }} -d -a devhub
-
-      - name: Get Changed Files
-        id: changed_files
         run: |
-          changed_files=$(sfdx force:source:diff --name-only)
-          echo "::set-output name=files::$changed_files"
-
-      - name: Validate Changes
+          sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -d -a devhub
+          
+      - name: Generate diff metadata
         run: |
-          sfdx force:source:deploy --checkonly --sourcepath ${{ steps.changed_files.outputs.files }} -u devhub --testlevel RunLocalTests --wait 200
+           sfdx sgd:source:delta 
+            --from ${{github.event.pull_request.base.sha}} \
+            --to ${{github.event.pull_request.head.sha}} \
+            --output . \
+            -i .forceignore
+
+      - name: Print package.xml
+        run: cat package/package.xml
+
+
+      - name: Validate changes
+        run: |
+          sfdx force:source:deploy --checkonly \
+            --manifest=package/package.xml \
+            --postdestructivechanges destructiveChanges/destructiveChanges.xml \
+            --testlevel=RunLocalTests \
+            -u devhub
+            --wait 200
