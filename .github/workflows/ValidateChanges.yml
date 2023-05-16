@@ -41,14 +41,18 @@ jobs:
         run: |
           sfdx force:source:pull --forceoverwrite --json -u devhub
 
-      - name: Print package.xml
+      - name: Generate package.xml
         run: |
-           cat ./force-app/main/default/package.xml
+          git diff --name-only HEAD^..HEAD | grep -E '^force-app/' | xargs -I{} dirname {} | sort -u | awk '{print "<members>" $0 "</members>"}' > package.xml
+          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" >> package.xml
+          cat package.xml >> package.xml
+          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> package.xml
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest ./path/to/package.xml \
+            --manifest package.xml \
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
+
