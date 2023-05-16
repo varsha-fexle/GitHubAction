@@ -60,4 +60,4 @@ jobs:
       # Deploying to production org(s) - deploy only commit changes
       - name: 'Deploying to production org(s) - deploy only commit changes'
         run:
-          sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunLocalTests --checkonly
+          sfdx force:source:deploy -manifest --testlevel RunLocalTests --checkonly
