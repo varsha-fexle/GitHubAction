@@ -25,13 +25,14 @@ jobs:
       - name: Authenticate with Auth URL
         run: |
           echo "${{ secrets.DEV_SFDX_URL }}" > auth-url.txt
-          $PWD/sfdx-cli/bin/sfdx force:auth:sfdxurl:store -f auth-url.txt -d -a production
+          AUTH_URL=$(cat auth-url.txt)
+          sfdx force:auth:sfdxurl:store -f auth-url.txt -d -a production
 
       - name: Put changed files into a dir
         run: |
           mkdir changed-sources
-          $PWD/sfdx-cli/bin/sfdx sgd:source:delta --to HEAD --from HEAD^ --output changed-sources -i .forceignore
+          sfdx sgd:source:delta --to HEAD --from HEAD^ --output changed-sources -i .forceignore
 
       - name: Deploying to production
         run: |
-          $PWD/sfdx-cli/bin/sfdx force:source:deploy -p "changed-sources/force-app" -u production -l RunLocalTests
+          sfdx force:source:deploy -p "changed-sources/force-app" -u production -l RunLocalTests
