@@ -2,7 +2,7 @@ name: Validate Changes
 on:
   push:
     branches:
-      - main  # Adjust the branch name if necessary
+      - master  # Adjust the branch name if necessary
 
 jobs:
   validate:
