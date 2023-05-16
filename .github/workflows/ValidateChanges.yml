@@ -40,6 +40,7 @@ jobs:
       - name: Retrieve changed source
         run: |
           sfdx force:source:pull --forceoverwrite --json -u devhub
+
       - name: Generate package.xml
         run: |
           if git rev-parse --quiet --verify HEAD^; then
@@ -47,17 +48,15 @@ jobs:
           else
             find force-app/ -type d | sed 's/^force-app\//<members>/; s/$/<\/members>/' > temp_package.xml
           fi
-          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" > package.xml
-          cat temp_package.xml >> package.xml
-          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >>  GitHubAction/manifest/package.xml
+          echo "<Package xmlns='http://soap.sforce.com/2006/04/metadata'><types>" > GitHubAction/manifest/package.xml
+          cat temp_package.xml >> GitHubAction/manifest/package.xml
+          echo "<name>ApexClass</name><members>*</members></types><version>53.0</version></Package>" >> GitHubAction/manifest/package.xml
           rm temp_package.xml
 
       - name: Validate changes
         run: |
           sfdx force:source:deploy --checkonly \
-            --manifest package.xml \
+            --manifest GitHubAction/manifest/package.xml \
             --testlevel RunLocalTests \
             -u devhub \
             --wait 200
-
-
