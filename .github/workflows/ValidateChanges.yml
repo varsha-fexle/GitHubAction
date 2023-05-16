@@ -24,7 +24,7 @@ jobs:
 
       - name: Authenticate with Auth URL
         run: |
-          echo "${{ secrets.DEV_SFDX_URL }}" > auth-url.txt
+          echo "${{ secrets.DEVHUB_SFDX_URL }}" > auth-url.txt
           AUTH_URL=$(cat auth-url.txt)
           sfdx force:auth:sfdxurl:store -f auth-url.txt -d -a production
 
