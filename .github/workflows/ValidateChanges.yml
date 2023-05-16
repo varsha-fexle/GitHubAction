@@ -18,12 +18,15 @@ jobs:
           tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
           echo 'export PATH=$PATH:$PWD/sfdx-cli/bin' >> $GITHUB_ENV
 
-      - name: 'Put changed files into a dir'
+      - name: Create changed-sources directory
         run: |
           mkdir changed-sources
+
+      - name: Retrieve changes
+        run: |
           sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources -i .forceignore
 
-      - name: 'Deploying to production'
+      - name: Deploying to production
         run: |
           cd changed-sources/force-app
-          sfdx force:source:deploy -p . -u devhub -l RunLocalTests
+          sfdx force:source:deploy -p . -u ${{ secrets.PRODUCTION_USERNAME }} -l RunLocalTests
