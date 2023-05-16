@@ -43,7 +43,7 @@ jobs:
 
       - name: Print package.xml
         run: |
-          cat ./GitHubAction/manifest/package.xml
+         cat ./GitHubAction/manifest/package.xml
 
       - name: Validate changes
         run: |
