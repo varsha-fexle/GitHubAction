@@ -38,8 +38,39 @@ jobs:
       - name: Generate package.xml
         run: |
           git diff-tree --no-commit-id --name-only -r origin/master | grep -v '.github/workflows/push-action-deploy.yml' > changedFiles.txt
-          sfdx force:source:tracking:report -f changedFiles.txt --outputdir package --json
-          cat package/sourcePathInfos.json
+          echo '<?xml version="1.0" encoding="UTF-8"?><Package xmlns="http://soap.sforce.com/2006/04/metadata">' > package.xml
+          while IFS= read -r file; do
+            echo "  <types>" >> package.xml
+            if [[ $file == *".cls" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexClass</name>" >> package.xml
+            elif [[ $file == *".trigger" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexTrigger</name>" >> package.xml
+            elif [[ $file == *".page" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexPage</name>" >> package.xml
+            elif [[ $file == *".component" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>ApexComponent</name>" >> package.xml
+            elif [[ $file == *".aura" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>AuraDefinitionBundle</name>" >> package.xml
+            elif [[ $file == *".lwc" ]]; then
+              echo "    <members>*</members>" >> package.xml
+              echo "    <name>LigthningComponentBundle</name>" >> package.xml
+            elif [[ $file == *"objects/"* ]]; then
+              object=${file#*"objects/"}
+              object=${object%%/*}
+              echo "    <members>$object</members>" >> package.xml
+              echo "    <name>CustomObject</name>" >> package.xml
+            fi
+            echo "  </types>" >> package.xml
+          done < changedFiles.txt
+          echo "  <version>53.0</version>" >> package.xml
+          echo "</Package>" >> package.xml
+          cat package.xml
+
 
       - name: Display package.xml
         run: |
