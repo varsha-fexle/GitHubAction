@@ -21,8 +21,8 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install sfdx-cli --global
-          sfdx plugins:install sfdx-git-delta
-          sfdx plugins
+          echo y | sfdx plugins:install sfdx-git-delta
+          sfdx plugin
 
       - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
         run: |
