@@ -15,7 +15,7 @@ jobs:
   push-to-prod:
     runs-on: ubuntu-latest
     steps:
-      # Install SFDX-Git-Delta plugin
+      # Install Dependencies
       - name: 'Installing sfdx git delta'
         run: |
           echo y | sfdx plugins:install sfdx-git-delta
