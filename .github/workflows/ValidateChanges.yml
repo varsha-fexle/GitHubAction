@@ -11,12 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set environment variable
+        run: echo 'MY_VARIABLE=my_value' >> $GITHUB_ENV
       - name: Install Salesforce CLI
         run: |
           wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
           mkdir sfdx-cli
           tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
-          echo 'export PATH=$PATH:$PWD/sfdx-cli/bin' >> $Github_env
+          echo 'export PATH=$PATH:$PWD/sfdx-cli/bin' >> MY_VARIABLE
 
       - name: Create changed-sources directory
         run: |
