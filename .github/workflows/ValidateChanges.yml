@@ -1,8 +1,9 @@
 name: Validate Changes
 on:
-  push:
+  pull_request:
+    types: [opened]
     branches:
-      - master  # Adjust the branch name if necessary
+      - master
 
 jobs:
   validate:
