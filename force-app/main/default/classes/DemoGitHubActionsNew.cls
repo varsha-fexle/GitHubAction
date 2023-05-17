@@ -1,7 +1,7 @@
 public with sharing class DemoGitHubActionsNew {
-    //Test word
+    //Test 
     public static void forTesting() {
-        System.debug('Hello word china');
-        System.debug('Hello word india');
+        System.debug('Hello world');
+
     }
 }
